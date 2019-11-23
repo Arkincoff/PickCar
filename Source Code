@@ -1,0 +1,95 @@
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+#import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+from keras.models import Sequential
+from keras.layers import Conv2D
+from keras.layers import MaxPooling2D
+from keras.layers import Dropout
+from keras.layers import Flatten
+from keras.layers import Dense
+from keras.utils.data_utils import Sequence
+from keras.layers import Activation
+from keras.preprocessing import image
+from keras.preprocessing.image import ImageDataGenerator
+import os
+#from IPython.display import display
+from PIL import Image
+
+#C:/Users/kerem/Desktop/CarClassificationProject/newData/train
+#C:/Users/kerem/Desktop/CarClassificationProject/newData/test
+#C:/Users/kerem/Desktop/CarClassificationProject/newData/model.h5
+input1 = input("enter the directory of the train set: ")
+input2 = input("enter the directory of the test set: ")
+input3 = input("enter the directory where you want to save your model: ")
+
+if not os.path.isdir(input1):
+    print(input1)
+    input1 = input("please enter an existing one: ")
+
+if not os.path.isdir(input2):
+    print(input2)
+    input2 = input("please enter an existing one: ")
+
+if not os.path.isdir(input3):
+    print(input3)
+    input3 = input("please enter an existing one: ")
+
+car_train = input1
+car_test = input2
+
+data = list()
+for labels in os.listdir(car_train):
+    if labels not in data:
+        data.append(labels)
+
+model = Sequential()
+model.add(Conv2D(32, (2, 2), input_shape=(128,128,3)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Conv2D(32, (2, 2)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Conv2D(64, (2, 2)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Flatten())
+model.add(Dense(64,activation= 'relu'))
+model.add(Dropout(0.5))
+model.add(Dense(1))
+model.add(Activation('sigmoid'))
+
+model.compile(loss='binary_crossentropy', optimizer='adagrad', metrics=['accuracy'])
+
+
+train_datagen = ImageDataGenerator(rescale=1./255,shear_range=0.2,zoom_range=0.2,horizontal_flip=True)
+test_datagen = ImageDataGenerator(rescale=1./255)
+
+training_set = train_datagen.flow_from_directory(input1,target_size=(128,128),batch_size=32,class_mode='binary')
+test_set = test_datagen.flow_from_directory(input2,target_size=(128,128),batch_size=32,class_mode='binary')
+
+history = model.fit_generator(training_set,steps_per_epoch=800,epochs=15,validation_data=test_set,validation_steps=300)
+model.save(input3)
+
+plt.figure(0, figsize = (5,5))
+plt.plot(history.history['acc'],'orange')
+plt.plot(history.history['val_acc'],'blue')
+plt.legend(['Train-Accuracy','Val-Accuracy'])
+_ = plt.title('Train vs Val Accuracy')
+_ = plt.xlabel('Epochs')
+_ = plt.ylabel('Accuracy')
+
+plt.figure(1, figsize = (5,5))
+plt.plot(history.history['loss'],'orange')
+plt.plot(history.history['val_loss'],'blue')
+plt.legend(['train','validation'])
+_ = plt.xlabel("Num of Epochs")
+_ = plt.ylabel("Loss")
+_ = plt.title("Training Loss vs Validation Loss")
+plt.show()
+
